@@ -7,7 +7,7 @@ public class FileBase {
     private static class FileBaseNode {
         // Хотя IDEA и ругается на "Single character alternation in RegExp", без скобок результат
         // выражения будет другим
-        private static final String isRequireRegExp = "require (‘|').*(’|')";
+        private static final String isRequireRegExp = "require (‘|')[^’']*(’|')";
         private static final Pattern isRequirePattern = Pattern.compile(isRequireRegExp);
 
         private final LinkedList<String> dependencies = new LinkedList<>();
