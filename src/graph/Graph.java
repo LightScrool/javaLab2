@@ -10,33 +10,48 @@ import java.util.LinkedList;
 public abstract class Graph<T extends GraphNode> {
     protected final HashMap<String, T> data = new HashMap<>();
 
-    private LinkedList<String> getCycleInner(String key, LinkedList<String> path) throws MissingDependencyException {
-        if (path.contains(key)) {
-            path.add(key);
-            return path;
+    private class GetCycleHelpers {
+        private final HashSet<String> visited;
+
+        private GetCycleHelpers() {
+            this.visited = new HashSet<>();
         }
 
-        path.add(key);
-        for (String item : data.get(key).getDependencies()) {
-            if (!data.containsKey(item)) {
-                throw new MissingDependencyException(key, item);
+        private LinkedList<String> innerFunction(String key, LinkedList<String> path) throws MissingDependencyException {
+            visited.add(key);
+            if (path.contains(key)) {
+                path.add(key);
+                return path;
             }
-            LinkedList<String> localResult = getCycleInner(item, path);
-            if (localResult != null) {
-                return localResult;
+
+            path.add(key);
+            for (String item : data.get(key).getDependencies()) {
+                if (!data.containsKey(item)) {
+                    throw new MissingDependencyException(key, item);
+                }
+                LinkedList<String> localResult = innerFunction(item, path);
+                if (localResult != null) {
+                    return localResult;
+                }
             }
+            path.removeLast();
+            return null;
         }
-        path.removeLast();
-        return null;
     }
 
     /**
      * Проверяет, присутствуют ли в графе циклы.
      * Возвращает первый найденный путь с циклом, если они есть;
-     * или null, если их нет*/
+     * или null, если их нет
+     */
     public LinkedList<String> getCycle() throws MissingDependencyException {
+        GetCycleHelpers getCycleHelpers = new GetCycleHelpers();
+
         for (String key : data.keySet()) {
-            LinkedList<String> localResult = getCycleInner(key, new LinkedList<>());
+            if (getCycleHelpers.visited.contains(key)) {
+                continue;
+            }
+            LinkedList<String> localResult = getCycleHelpers.innerFunction(key, new LinkedList<>());
             if (localResult != null) {
                 return localResult;
             }
@@ -56,7 +71,7 @@ public abstract class Graph<T extends GraphNode> {
             this.currentPos = 0;
         }
 
-        private void invoke(String key) throws MissingDependencyException {
+        private void innerFunction(String key) throws MissingDependencyException {
             visited.add(key);
             for (String item : data.get(key).getDependencies()) {
                 if (!data.containsKey(item)) {
@@ -65,7 +80,7 @@ public abstract class Graph<T extends GraphNode> {
                 if (visited.contains(item)) {
                     continue;
                 }
-                invoke(item);
+                innerFunction(item);
             }
             result[currentPos] = key;
             ++currentPos;
@@ -83,7 +98,7 @@ public abstract class Graph<T extends GraphNode> {
             if (topologicalSortHelpers.visited.contains(key)) {
                 continue;
             }
-            topologicalSortHelpers.invoke(key);
+            topologicalSortHelpers.innerFunction(key);
         }
 
         return topologicalSortHelpers.result;
