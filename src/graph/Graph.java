@@ -5,50 +5,44 @@ import graph.exceptions.MissingDependencyException;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 public abstract class Graph<T extends GraphNode> {
     protected final HashMap<String, T> data = new HashMap<>();
 
-    private class HasCyclesHelpers {
-        private final HashSet<String> currentVisited;
-
-        private HasCyclesHelpers() {
-            this.currentVisited = new HashSet<>();
+    private LinkedList<String> getCycleInner(String key, LinkedList<String> path) throws MissingDependencyException {
+        if (path.contains(key)) {
+            path.add(key);
+            return path;
         }
 
-        private boolean invokeInner(String key) throws MissingDependencyException {
-            if (currentVisited.contains(key)) {
-                return true;
+        path.add(key);
+        for (String item : data.get(key).getDependencies()) {
+            if (!data.containsKey(item)) {
+                throw new MissingDependencyException(key, item);
             }
-            currentVisited.add(key);
-
-            for (String item : data.get(key).getDependencies()) {
-                if (!data.containsKey(item)) {
-                    throw new MissingDependencyException(key, item);
-                }
-                if (invokeInner(item)) {
-                    return true;
-                }
+            LinkedList<String> localResult = getCycleInner(item, path);
+            if (localResult != null) {
+                return localResult;
             }
-            return false;
         }
-
-        private boolean invoke(String key) throws MissingDependencyException {
-            currentVisited.clear();
-            return invokeInner(key);
-        }
+        path.removeLast();
+        return null;
     }
 
-    public boolean hasCycles() throws MissingDependencyException {
-        HasCyclesHelpers topologicalSortHelpers = new HasCyclesHelpers();
-
+    /**
+     * Проверяет, присутствуют ли в графе циклы.
+     * Возвращает первый найденный путь с циклом, если они есть;
+     * или null, если их нет*/
+    public LinkedList<String> getCycle() throws MissingDependencyException {
         for (String key : data.keySet()) {
-            if (topologicalSortHelpers.invoke(key)) {
-                return true;
+            LinkedList<String> localResult = getCycleInner(key, new LinkedList<>());
+            if (localResult != null) {
+                return localResult;
             }
         }
 
-        return false;
+        return null;
     }
 
     private class TopologicalSortHelpers {
@@ -79,8 +73,9 @@ public abstract class Graph<T extends GraphNode> {
     }
 
     public String[] topologicalSort() throws MissingDependencyException, CycleException {
-        if (hasCycles()) {
-            throw new CycleException();
+        LinkedList<String> cycle = getCycle();
+        if (cycle != null) {
+            throw new CycleException(cycle);
         }
         TopologicalSortHelpers topologicalSortHelpers = new TopologicalSortHelpers();
 

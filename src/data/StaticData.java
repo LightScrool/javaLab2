@@ -10,7 +10,15 @@ public class StaticData {
         return "У узла \"" + node + "\" указана зависимость \"" + dependency + "\", которой нет в графе!";
     }
 
-    public static String getCycleExceptionText() {
-        return "Невозможно выполнить операцию из-за цикла в графе!";
+    public static String getCycleExceptionText(Iterable<String> cycle) {
+        StringBuilder result = new StringBuilder("Невозможно выполнить операцию из-за цикла в графе!\nЦикл:\n");
+        String separator = " -> ";
+
+        for (String item : cycle) {
+            result.append(item).append(separator);
+        }
+        result.delete(result.length() - separator.length(), result.length());
+
+        return result.toString();
     }
 }
