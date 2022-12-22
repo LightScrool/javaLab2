@@ -1,21 +1,25 @@
+import data.DataReader;
 import data.StaticData;
 import filebase.FileBase;
 import graph.exceptions.GraphException;
+import writers.Output;
 
-import java.util.Arrays;
+import java.util.HashMap;
 
 public class Main {
     public static void main(String[] args) {
         DataReader dataReader = new DataReader(StaticData.INPUT_FOLDER);
-        var data = dataReader.readData();
+        HashMap<String, String> data = dataReader.readData();
         FileBase fileBase = new FileBase(data);
 
         try {
             String[] sortedFiles = fileBase.topologicalSort();
-            System.out.println(Arrays.toString(sortedFiles));
-
+            Output.printInConsole(sortedFiles);
+            String[] sortedTexts = fileBase.getText(sortedFiles);
+            String concatText = Helpers.concatStrings(sortedTexts);
+            Output.printInFile(concatText);
         } catch (GraphException exception) {
-            System.out.println(exception.getMessage());
+            Output.printInConsole(exception.getMessage());
         }
     }
 }

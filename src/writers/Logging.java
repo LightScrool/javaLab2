@@ -1,3 +1,5 @@
+package writers;
+
 public class Logging {
     private Logging() {}
 

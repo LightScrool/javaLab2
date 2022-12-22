@@ -5,6 +5,7 @@ public class StaticData {
     }
 
     public static final String INPUT_FOLDER = "input";
+    public static final String OUTPUT_FILE = "output.txt";
     public static final String IS_REQUIRE_REG_EXP = "require (‘|')[^’']*(’|')";
 
     public static String getMissingDependencyExceptionText(String node, String dependency) {
